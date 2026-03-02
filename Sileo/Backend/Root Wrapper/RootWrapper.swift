@@ -142,7 +142,19 @@ final public class MacRootWrapper {
     posix_spawn_file_actions_addclose(&fileActions, pipestdout[1])
     posix_spawn_file_actions_addclose(&fileActions, pipestderr[1])
 
-    let argv: [UnsafeMutablePointer<CChar>?] = args.map { $0.withCString(strdup) }
+    var spawnCommand = command
+    var spawnArguments = args
+    #if !targetEnvironment(macCatalyst)
+    if root {
+        guard let giveMeRootPath = Bundle.main.path(forAuxiliaryExecutable: "giveMeRoot") else {
+            return (-1, "", "Unable to find giveMeRoot")
+        }
+        spawnCommand = giveMeRootPath
+        spawnArguments = ["giveMeRoot", command] + Array(args.dropFirst())
+    }
+    #endif
+
+    let argv: [UnsafeMutablePointer<CChar>?] = spawnArguments.map { $0.withCString(strdup) }
     defer { for case let arg? in argv { free(arg) } }
 
     var pid: pid_t = 0
@@ -151,34 +163,19 @@ final public class MacRootWrapper {
     let env = [ "PATH=/opt/procursus/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin" ]
     let proenv: [UnsafeMutablePointer<CChar>?] = env.map { $0.withCString(strdup) }
     defer { for case let pro? in proenv { free(pro) } }
-    let spawnStatus = posix_spawn(&pid, command, &fileActions, nil, argv + [nil], proenv + [nil])
+    let spawnStatus = posix_spawn(&pid, spawnCommand, &fileActions, nil, argv + [nil], proenv + [nil])
     #else
     // Weird problem with a weird workaround
     let env = [ "PATH=/usr/bin:/rootfs/usr/bin:/usr/local/bin:/rootfs/usr/local/bin:/bin:/rootfs/bin:/usr/sbin:/rootfs/usr/sbin", "LANG=C" ] //the output JSON of apt may be localized so that sileo can't parse, here we forece set it to en_US.UTF-8
     let envp: [UnsafeMutablePointer<CChar>?] = env.map { $0.withCString(strdup) }
     defer { for case let env? in envp { free(env) } }
     
-    let spawnStatus: Int32
-    if #available(iOS 13, *) {
-        if root {
-            var attr: posix_spawnattr_t?
-            posix_spawnattr_init(&attr)
-            defer { posix_spawnattr_destroy(&attr) }
-            posix_spawnattr_set_persona_np(&attr, 99, UInt32(POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE))
-            posix_spawnattr_set_persona_uid_np(&attr, 0)
-            posix_spawnattr_set_persona_gid_np(&attr, 0)
-            spawnStatus = posix_spawn(&pid, command, &fileActions, &attr, argv + [nil], envp + [nil])
-        } else {
-            spawnStatus = posix_spawn(&pid, command, &fileActions, nil, argv + [nil], envp + [nil])
-        }
-    } else {
-        spawnStatus = posix_spawn(&pid, command, &fileActions, nil, argv + [nil], envp + [nil])
-    }
+    let spawnStatus = posix_spawn(&pid, spawnCommand, &fileActions, nil, argv + [nil], envp + [nil])
     #endif
-    NSLog("SileoLog: spawn \(command) with \(args)")
+    NSLog("SileoLog: spawn \(spawnCommand) with \(spawnArguments)")
     if spawnStatus != 0 {
         NSLog("SileoLog: spawn error=\(spawnStatus),\(String(cString: strerror(spawnStatus)))")
-        return (Int(spawnStatus), "ITS FAILING HERE", "Error = \(String(cString: strerror(spawnStatus)))\n\(command)")
+        return (Int(spawnStatus), "ITS FAILING HERE", "Error = \(String(cString: strerror(spawnStatus)))\n\(spawnCommand)")
     }
 
     close(pipestdout[1])
@@ -267,17 +264,8 @@ final public class MacRootWrapper {
     #elseif targetEnvironment(macCatalyst)
     MacRootWrapper.shared.spawn(args: args, outputCallback: outputCallback)
     #else
-    if #available(iOS 13, *) {
-        var args = args
-        let command = args.first!
-        args[0] = String(command.split(separator: "/").last!)
-        return spawn(command:command, args: args, root: true)
-    } else {
-        guard let giveMeRootPath = Bundle.main.path(forAuxiliaryExecutable: "giveMeRoot") else {
-            return (-1, "", "")
-        }
-        return spawn(command: giveMeRootPath, args: ["giveMeRoot"] + args)
-    }
+    let command = args.first!
+    return spawn(command: command, args: args, root: true)
     #endif
 }
 
@@ -327,4 +315,3 @@ func moveFileAsRoot(from: URL, to: URL) {
     spawnAsRoot(args: [CommandPath.chmod, "0644", rootfs("\(to.path)")])
     #endif
 }
-
