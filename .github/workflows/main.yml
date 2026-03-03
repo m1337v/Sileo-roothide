@@ -51,18 +51,18 @@ jobs:
           PATH=/opt/procursus/sbin:/opt/procursus/bin:$PATH sudo /opt/procursus/bin/apt update
           sudo /opt/procursus/bin/apt install zstd apt-utils ldid xz-utils bzip2 lz4 -y --allow-downgrades -oDpkg::Options::=--force-confdef -oDpkg::Options::=--force-confnew
 
-      - name: Build Sileo Nightly (iphoneos-arm64)
+      - name: Build Sileo (iphoneos-arm64)
         run: |
-          make clean package NIGHTLY=1 DEBUG=0 ALL_BOOTSTRAPS=1 SILEO_PLATFORM=iphoneos-arm64
+          make clean package SILEO_PLATFORM=iphoneos-arm64
 
       - name: Collect arm64 deb
         run: |
           mkdir -p nightly-debs
           cp packages/*_iphoneos-arm64.deb nightly-debs/
 
-      - name: Build Sileo Nightly (iphoneos-arm64e / roothide)
+      - name: Build Sileo (iphoneos-arm64e / roothide)
         run: |
-          make clean package NIGHTLY=1 DEBUG=0 ALL_BOOTSTRAPS=1 SILEO_PLATFORM=iphoneos-arm64e
+          make clean package SILEO_PLATFORM=iphoneos-arm64e
 
       - name: Collect arm64e deb
         run: |
