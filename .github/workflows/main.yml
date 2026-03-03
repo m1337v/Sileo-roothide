@@ -9,10 +9,17 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: nightly-release
+  cancel-in-progress: true
+
 jobs:
   nightly:
     name: Build arm64 + arm64e and publish nightly
-    runs-on: macos-12
+    runs-on: macos-latest
+    env:
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
 
     steps:
       - name: Checkout
@@ -20,38 +27,46 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Procursus Bootstrap (install)
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install bootstrap prerequisites
         run: |
-          wget https://apt.procurs.us/bootstraps/big_sur/bootstrap-darwin-amd64.tar.zst
-          sudo gtar --preserve-permissions -xkf ./bootstrap-darwin-amd64.tar.zst -C /
-          echo '/opt/procursus/sbin:/opt/procursus/bin' >> $GITHUB_PATH
+          brew install wget gnu-tar zstd
+
+      - name: Setup Procursus
+        run: |
+          set -euxo pipefail
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            PROC_ARCH="arm64"
+          else
+            PROC_ARCH="amd64"
+          fi
+          BOOTSTRAP_URL="https://apt.procurs.us/bootstraps/big_sur/bootstrap-darwin-${PROC_ARCH}.tar.zst"
+          wget "$BOOTSTRAP_URL" -O bootstrap-darwin.tar.zst
+          sudo gtar --preserve-permissions -xkf ./bootstrap-darwin.tar.zst -C /
+          echo "/opt/procursus/sbin:/opt/procursus/bin" >> "$GITHUB_PATH"
           PATH=/opt/procursus/sbin:/opt/procursus/bin:$PATH sudo /opt/procursus/bin/apt update
-          sudo /opt/procursus/bin/apt -V full-upgrade -y --allow-downgrades -oDpkg::Options::=--force-confdef -oDpkg::Options::=--force-confnew
-        continue-on-error: true
-
-      - name: Upgrade
-        run: |
-          sudo /opt/procursus/bin/apt -V upgrade -y --allow-downgrades -oDpkg::Options::=--force-confdef -oDpkg::Options::=--force-confnew
-
-      - name: Upgrade and install
-        run: |
           sudo /opt/procursus/bin/apt install zstd apt-utils ldid xz-utils bzip2 lz4 -y --allow-downgrades -oDpkg::Options::=--force-confdef -oDpkg::Options::=--force-confnew
-
-      - name: Add Procursus to PATH
-        run: |
-          echo '/opt/procursus/sbin:/opt/procursus/bin' >> $GITHUB_PATH
-
-      - name: Select Correct Xcode (14.2)
-        run: |
-          sudo xcode-select --switch /Applications/Xcode_14.2.app
 
       - name: Build Sileo Nightly (iphoneos-arm64)
         run: |
           make clean package NIGHTLY=1 DEBUG=0 ALL_BOOTSTRAPS=1 SILEO_PLATFORM=iphoneos-arm64
 
+      - name: Collect arm64 deb
+        run: |
+          mkdir -p nightly-debs
+          cp packages/*_iphoneos-arm64.deb nightly-debs/
+
       - name: Build Sileo Nightly (iphoneos-arm64e / roothide)
         run: |
           make clean package NIGHTLY=1 DEBUG=0 ALL_BOOTSTRAPS=1 SILEO_PLATFORM=iphoneos-arm64e
+
+      - name: Collect arm64e deb
+        run: |
+          cp packages/*_iphoneos-arm64e.deb nightly-debs/
 
       - name: Publish Nightly Release
         uses: ncipollo/release-action@v1
@@ -66,4 +81,4 @@ jobs:
           removeArtifacts: true
           replacesArtifacts: true
           artifactErrorsFailBuild: true
-          artifacts: "packages/*_iphoneos-arm64.deb,packages/*_iphoneos-arm64e.deb"
+          artifacts: "nightly-debs/*.deb"
