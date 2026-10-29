@@ -524,9 +524,9 @@
 		E15A954D26B99408000DB10E /* LanguageSelectionCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E15A954B26B99408000DB10E /* LanguageSelectionCell.swift */; };
 		E162DA0627BE78CF00DDD3E4 /* Alderis in Frameworks */ = {isa = PBXBuildFile; productRef = E162DA0527BE78CF00DDD3E4 /* Alderis */; };
 		E162DA0827BE78E100DDD3E4 /* Alderis in Frameworks */ = {isa = PBXBuildFile; productRef = E162DA0727BE78E100DDD3E4 /* Alderis */; };
-		E163BE9D28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; };
-		E163BE9E28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; };
-		E163BE9F28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; };
+		E163BE9D28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; settings = {COMPILER_FLAGS = "-fno-builtin-strrchr"; }; };
+		E163BE9E28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; settings = {COMPILER_FLAGS = "-fno-builtin-strrchr"; }; };
+		E163BE9F28896E46004A20CC /* dpkgversion.c in Sources */ = {isa = PBXBuildFile; fileRef = E163BE9C28896E46004A20CC /* dpkgversion.c */; settings = {COMPILER_FLAGS = "-fno-builtin-strrchr"; }; };
 		E163BEB52889E5B9004A20CC /* Set+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E163BEB42889E5B9004A20CC /* Set+Extensions.swift */; };
 		E163BEB62889E5B9004A20CC /* Set+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E163BEB42889E5B9004A20CC /* Set+Extensions.swift */; };
 		E163BEB72889E5B9004A20CC /* Set+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E163BEB42889E5B9004A20CC /* Set+Extensions.swift */; };
