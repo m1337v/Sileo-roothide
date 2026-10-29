@@ -20,6 +20,7 @@ jobs:
     env:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
+      SILEO_PACKAGE_VERSION: 2.5.1-14+opamine1
 
     steps:
       - name: Checkout
@@ -53,7 +54,7 @@ jobs:
 
       - name: Build Sileo (iphoneos-arm64)
         run: |
-          make clean package SILEO_PLATFORM=iphoneos-arm64
+          make clean package SILEO_PLATFORM=iphoneos-arm64 SILEO_VERSION="${SILEO_PACKAGE_VERSION}"
 
       - name: Collect arm64 deb
         run: |
@@ -62,7 +63,7 @@ jobs:
 
       - name: Build Sileo (iphoneos-arm64e / roothide)
         run: |
-          make clean package SILEO_PLATFORM=iphoneos-arm64e
+          make clean package SILEO_PLATFORM=iphoneos-arm64e SILEO_VERSION="${SILEO_PACKAGE_VERSION}"
 
       - name: Collect arm64e deb
         run: |

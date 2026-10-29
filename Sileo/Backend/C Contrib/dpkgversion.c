@@ -22,10 +22,7 @@ int order(char ch) {
 int validate(char *string, int *length) {
     for (int i = 0; i < *length; i++) {
         char character = string[i];
-        int isAllowedPunctuation = (character == '.') || (character == '-') ||
-                                   (character == '+') || (character == '~') ||
-                                   (character == ':');
-        if (!(isdigit(character) || isalpha(character) || isAllowedPunctuation)) {
+        if (!(isdigit(character) || isalpha(character) || strrchr(".-+~:", character))) {
             return 1;
         }
     }
